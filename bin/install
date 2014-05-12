@@ -1,0 +1,12 @@
+#!/bin/bash -eux
+
+case "$1" in
+  -v|--version)
+    version="$2"
+esac
+
+cp -r ${OPENSHIFT_HADOOP_DIR}/versions/${version}/template/* ${OPENSHIFT_HADOOP_DIR}/template
+cp -r ${OPENSHIFT_HADOOP_DIR}/versions/${version}/template/.openshift ${OPENSHIFT_HADOOP_DIR}/template
+
+echo "$version" > "$OPENSHIFT_HADOOP_DIR/env/OPENSHIFT_HADOOP_VERSION"
+

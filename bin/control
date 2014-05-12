@@ -1,0 +1,219 @@
+#!/bin/bash -e
+
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+
+HADOOP_BIN_DIR=${OPENSHIFT_HADOOP_DIR}/bin
+
+cartridge_type="hadoop"
+version=2.4
+
+HADOOP_RM_PID_FILE="/tmp/hadoop_rm.pid"
+HADOOP_NM_PID_FILE="/tmp/hadoop_nm.pid"
+
+function build() {
+  echo "Building Infinispan"
+
+}
+
+function deploy() {
+  echo "Deploying Infinispan"
+  
+}
+
+function copy_conf() {
+	# Create a link for each file in user config to server standalone/config
+	if [ -d ${OPENSHIFT_REPO_DIR}.openshift/config ]
+	then
+	  for f in ${OPENSHIFT_REPO_DIR}.openshift/config/*
+	  do
+	    target=$(basename $f)
+	    # Remove any target that is being overwritten
+	    if [ -e "${OPENSHIFT_HADOOP_DIR}/hadoop/bin/$target" ]
+	    then
+	       echo "Removing existing $target"
+	       rm -rf "${OPENSHIFT_HADOOP_DIR}/hadoop/bin/*"
+	       cp ${OPENSHIFT_REPO_DIR}.openshift/hadoop/bin/* ${OPENSHIFT_HADOOP_DIR}/hadoop/bin
+	    fi
+	  done
+	else
+		cp ${OPENSHIFT_HADOOP_DIR}/versions/${version}/hadoop/bin/* ${OPENSHIFT_HADOOP_DIR}/hadoop/bin
+	fi
+}
+
+function replace_envs() {
+	for f in ${OPENSHIFT_HADOOP_DIR}/hadoop/bin/*
+	do
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/$OPENSHIFT_HADOOP_IP/g" \
+			$f
+	done
+	
+	if [ -z "$OPENSHIFT_HADOOP_CLUSTER" ]; then
+		OPENSHIFT_HADOOP_CLUSTER="${OPENSHIFT_HADOOP_IP}[7600]"
+	fi
+	
+	if [ -z "$OPENSHIFT_HADOOP_CLUSTER_PROXY_PORT" ]; then
+		OPENSHIFT_HADOOP_CLUSTER_PROXY_PORT=7600
+	fi
+	
+	for f in ${OPENSHIFT_HADOOP_DIR}/hadoop/etc/*.xml
+	do
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" \
+		       -e "s/\${env.OPENSHIFT_HADOOP_CLUSTER}/${OPENSHIFT_HADOOP_CLUSTER}/g" \
+		       -e "s/\${env.OPENSHIFT_GEAR_DNS}/${OPENSHIFT_GEAR_DNS}/g" \
+		       -e "s/\${env.OPENSHIFT_HADOOP_CLUSTER_PROXY_PORT}/${OPENSHIFT_HADOOP_CLUSTER_PROXY_PORT}/g" \
+			$f
+	done
+}
+
+isrunning() {
+    # Check for running app
+    if [ -f "$HADOOP_PID_FILE" ]; then
+      pid=$(cat $HADOOP_PID_FILE);
+      running=`/bin/ps --no-headers --pid $pid`
+      if test -n "$running";
+      then
+        return 0
+      fi
+    fi
+    # not running
+    return 1
+}
+
+function start() {
+  echo "Starting $cartridge_type cart"
+  
+  copy_conf
+  
+  replace_envs
+    
+  if marker_present "enable_jpda"
+  then
+    export ENABLE_JPDA=1
+  fi
+
+  # Check for running app
+  if isrunning; then
+      echo "Application is already running"
+  else    
+    pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
+    	sbin/yarn-daemon.sh start resourcemanager 2>&1 &
+    	PROCESS_ID=$!
+    	echo $PROCESS_ID > $HADOOP_RM_PID_FILE
+    
+        sbin/yarn-daemon.sh start nodemanager 2>&1 &
+        PROCESS_ID=$!
+        echo $PROCESS_ID > $HADOOP_NM_PID_FILE
+    popd
+  fi
+}
+
+# Kill the process given by $1 and its children
+killtree() {
+    local _pid=$1
+    for _child in $(ps -o pid --no-headers --ppid ${_pid}); do
+        killtree ${_child}
+    done
+
+    local should_be_gone_pid=$(ps -o pid -p ${_pid} --no-headers)
+    if [ -z $should_be_gone_pid ]; then
+        return
+    else
+        kill -TERM ${_pid}
+    fi
+
+    local count=0
+    while [ ${count} -lt 15 ]
+    do
+        local should_be_gone_pid=$(ps -o pid -p ${_pid} --no-headers)
+        if [ -z $should_be_gone_pid ]; then
+                return
+        else
+                sleep 2
+                let count=${count}+1
+        fi
+    done
+
+    local should_be_gone_pid=$(ps -o pid -p ${_pid} --no-headers)
+    if [ ! -z $should_be_gone_pid ]
+    then
+        kill -9 ${_pid}
+    fi
+}
+
+
+function stop() {
+  	echo "Stopping $cartridge_type cart"
+  	
+  	if isrunning; then
+    	if [ -f "$HADOOP_PID_FILE" ]; then
+      		pid=$(cat $HADOOP_PID_FILE);
+      		echo "Sending SIGTERM to hadoop:$pid ..." 1>&2
+      		killtree $pid
+    	else
+      		echo "Failed to locate HADOOP PID File" 1>&2
+    	fi
+  fi
+  
+}
+
+function restart() {
+    echo "Restarting $cartridge_type cart"
+   
+  	stop
+  	
+  	start
+}
+
+function status() {
+   if isrunning
+   then
+      echo "Application is running"
+   else
+      echo "Application is either stopped or inaccessible"
+   fi
+}
+
+function reload() {
+    echo "Reloading $cartridge_type cart"
+    restart
+}
+
+# Clean up any log files
+function tidy() {
+  client_message "Emptying log dir: $OPENSHIFT_HADOOP_LOG_DIR"
+  shopt -s dotglob
+  rm -rf $OPENSHIFT_HADOOP_LOG_DIR/*
+}
+
+function threaddump() {
+	echo "Thread dump for $cartridge_type cart"
+	
+    if ! isrunning; then
+        echo "Application is stopped"
+        exit 1
+    elif [ -f "$HADOOP_PID_FILE" ]; then
+        pid=$(cat $HADOOP_PID_FILE);
+        java_pid=$(ps h --ppid $pid -o '%p')
+        kill -3 $java_pid
+        client_result "Success"
+        client_result ""
+        client_result "The thread dump file will be available via: rhc tail $OPENSHIFT_APP_NAME -f */logs/server.log -o '-n 250'"
+    else 
+        echo "Failed to locate JBOSS PID File"
+    fi
+}
+
+case "$1" in
+  build)		build ;;
+  deploy)	    deploy ;;
+  start)     	start ;;
+  stop)      	stop ;;
+  restart)   	restart ;;
+  status)    	status ;;
+  reload)    	reload ;;
+  tidy)      	tidy ;;
+  threaddump)   threaddump ;;
+  *)         	exit 0
+esac
+
+
