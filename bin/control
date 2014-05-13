@@ -64,12 +64,7 @@ function restart() {
 }
 
 function status() {
-   if isrunning
-   then
-      echo "Application is running"
-   else
-      echo "Application is either stopped or inaccessible"
-   fi
+   echo "Application is installed"
 }
 
 function reload() {
