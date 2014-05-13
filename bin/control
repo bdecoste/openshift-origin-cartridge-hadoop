@@ -7,9 +7,6 @@ HADOOP_BIN_DIR=${OPENSHIFT_HADOOP_DIR}/bin
 cartridge_type="hadoop"
 version=2.4
 
-HADOOP_RM_PID_FILE="/tmp/hadoop_rm.pid"
-HADOOP_NM_PID_FILE="/tmp/hadoop_nm.pid"
-
 function build() {
   echo "Building Hadoop"
 
@@ -20,92 +17,42 @@ function deploy() {
   
 }
 
-
-isrunning() {
-    # Check for running app
-    if [ -f "$HADOOP_NM_PID_FILE" ]; then
-      pid=$(cat $HADOOP_NM_PID_FILE);
-      running=`/bin/ps --no-headers --pid $pid`
-      if test -n "$running";
-      then
-        return 0
-      fi
-    fi
-    # not running
-    return 1
-}
-
 function start() {
-  echo "Starting $cartridge_type cart"
+  echo "Starting Hadoop"
+
+  HADOOP_CONF_DIR=${OPENSHIFT_HADOOP_DIR}/hadoop/etc/hadoop
   
   # Check for running app
-  if isrunning; then
-      echo "Application is already running"
-  else    
-    pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
-    	sbin/yarn-daemon.sh start resourcemanager 2>&1 &
-    	PROCESS_ID=$!
-    	echo $PROCESS_ID > $HADOOP_RM_PID_FILE
-    
-        sbin/yarn-daemon.sh start nodemanager 2>&1 &
-        PROCESS_ID=$!
-        echo $PROCESS_ID > $HADOOP_NM_PID_FILE
-    popd
-  fi
-}
-
-# Kill the process given by $1 and its children
-killtree() {
-    local _pid=$1
-    for _child in $(ps -o pid --no-headers --ppid ${_pid}); do
-        killtree ${_child}
-    done
-
-    local should_be_gone_pid=$(ps -o pid -p ${_pid} --no-headers)
-    if [ -z $should_be_gone_pid ]; then
-        return
-    else
-        kill -TERM ${_pid}
-    fi
-
-    local count=0
-    while [ ${count} -lt 15 ]
-    do
-        local should_be_gone_pid=$(ps -o pid -p ${_pid} --no-headers)
-        if [ -z $should_be_gone_pid ]; then
-                return
+  pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
+	if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
+		bin/hdfs namenode -format default 2>&1
+		sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start namenode 2>&1
+		sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start resourcemanager 2>&1    	
+	        sbin/yarn-daemon.sh start proxyserver --config $HADOOP_CONF_DIR 2>&1
+                sbin/mr-jobhistory-daemon.sh start historyserver --config $HADOOP_CONF_DIR 2>&1
         else
-                sleep 2
-                let count=${count}+1
-        fi
-    done
-
-    local should_be_gone_pid=$(ps -o pid -p ${_pid} --no-headers)
-    if [ ! -z $should_be_gone_pid ]
-    then
-        kill -9 ${_pid}
-    fi
+		sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start datanode 2>&1
+		sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start nodemanager 2>&1
+	fi
+  popd
 }
-
 
 function stop() {
-  	echo "Stopping $cartridge_type cart"
+  	echo "Stopping Hadoop"
+
+	HADOOP_CONF_DIR=${OPENSHIFT_HADOOP_DIR}/hadoop/etc/hadoop
   	
-  	if isrunning; then
-    	if [ -f "$HADOOP_NM_PID_FILE" ]; then
-      		pid=$(cat $HADOOP_NM_PID_FILE);
-      		echo "Sending SIGTERM to hadoop:$pid ..." 1>&2
-      		killtree $pid
-                if [ -f "$HADOOP_RM_PID_FILE" ]; then
-                	pid=$(cat $HADOOP_RM_PID_FILE);
-                	echo "Sending SIGTERM to hadoop:$pid ..." 1>&2
-                	killtree $pid
+ 	pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
+        	if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
+			sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs stop namenode 2>&1
+			sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR stop resourcemanager 2>&1
+			sbin/yarn-daemon.sh stop proxyserver --config $HADOOP_CONF_DIR 2>&1
+			sbin/mr-jobhistory-daemon.sh stop historyserver --config $HADOOP_CONF_DIR 2>&1
+		else
+			sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs stop datanode 2>&1
+			sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR stop nodemanager 2>&1
 		fi
-    	else
-      		echo "Failed to locate HADOOP PID File" 1>&2
-    	fi
-  fi
-  
+	popd 
 }
 
 function restart() {

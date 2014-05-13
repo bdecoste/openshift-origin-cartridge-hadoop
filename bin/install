@@ -6,7 +6,9 @@ case "$1" in
 esac
 
 cp -r ${OPENSHIFT_HADOOP_DIR}/versions/${version}/template/* ${OPENSHIFT_HADOOP_DIR}/template
-cp -r ${OPENSHIFT_HADOOP_DIR}/versions/${version}/template/.openshift ${OPENSHIFT_HADOOP_DIR}/template
 
 echo "$version" > "$OPENSHIFT_HADOOP_DIR/env/OPENSHIFT_HADOOP_VERSION"
+
+mv ${OPENSHIFT_HADOOP_DIR}/versions/${version}/*.tar.gz ${OPENSHIFT_HADOOP_DIR}
+tar xvf ./*.tar.gz
 
