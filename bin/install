@@ -1,6 +1,6 @@
 #!/bin/bash -eux
 
-echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!! install"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! install"
 
 case "$1" in
   -v|--version)
@@ -16,13 +16,15 @@ mv ${OPENSHIFT_HADOOP_DIR}/versions/${version}/*.tar.gz ${OPENSHIFT_HADOOP_DIR}
 tar xvf hadoop1.tar.gz
 tar xvf hadoop2.tar.gz
 
-
-
 pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
 	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/hdfs-site.xml
 
 #        if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
-                bin/hdfs namenode -format default 2>&1
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! formatting"
+                bin/hdfs namenode -format default
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! formatted"
 #	fi
 popd
+
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! installed"
 

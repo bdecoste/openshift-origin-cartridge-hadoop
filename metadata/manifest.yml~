@@ -47,36 +47,49 @@ Provides:
   - "hadoop(version) = 2.4"
   - "hadoop(version) >= 2.4"
 Publishes:
-  publish-generic-java:
-    Type: "ENV:NET_TCP:generic-java"
   publish-hadoop-cluster:
-    Type: "NET_TCP:hadoop-cluster-info"
+    Type: NET_TCP:hadoop-cluster-info
+  publish-hadoop-rm-rt:
+    Type: NET_TCP:hadoop-rm-rt-info
 Subscribes:
+  set-env:
+    Type: ENV:*
+    Required: false
+  set-doc-url:
+    Type: STRING:urlpath
+    Required: false
   set-hadoop-cluster:
-    Type: "NET_TCP:hadoop-cluster-info"
+    Type: NET_TCP:hadoop-cluster-info
+  set-hadoop-rm-rt:
+    Type: NET_TCP:hadoop-rm-rt-info
 Scaling:
   Min: 1
   Max: -1
 Endpoints:
-  - Private-IP-Name:     IP
-    Private-Port-Name:   HTTP_PORT
-    Private-Port:        8088
-    Public-Port-Name:    HTTP_PROXY_PORT
-    WebSocket-Port-Name: WEBSOCKET_PORT
-    WebSocket-Port:      8676
+  - Private-IP-Name: IP
+    Private-Port-Name: HTTP_PORT
+    Private-Port: 8088
+    Public-Port-Name: HTTP_PROXY_PORT
+    Protocols:
+    - http
+    - ws
+    Options:
+      primary: true
     Mappings:
-      - Frontend:      ""
-        Backend:       ""
-        Options:       { "websocket": 1}
-      - Frontend:      "/health"
-        Backend:       ""
-        Options:       { health: true }
-  - Private-IP-Name:   IP
-    Private-Port-Name: CLUSTER_PORT
-    Private-Port:      8031
-    Public-Port-Name:  CLUSTER_PROXY_PORT
-  - Private-IP-Name:   IP
-    Private-Port-Name: HDFS_PORT
-    Private-Port:      50070
-    Public-Port-Name:  HDFS_PROXY_PORT
+    - Frontend: ''
+      Backend: ''
+      Options:
+        websocket: true
+    - Frontend: /health
+      Backend: ''
+      Options:
+        health: true
+  - Private-IP-Name:   	IP
+    Private-Port-Name: 	HDFS_PORT
+    Private-Port:      	8020
+    Public-Port-Name:  	HDFS_PROXY_PORT
+  - Private-IP-Name:   	IP
+    Private-Port-Name: 	RM_RT_PORT
+    Private-Port:      	8031
+    Public-Port-Name:  	RM_RT_PROXY_PORT
 Install-Build-Required: false
