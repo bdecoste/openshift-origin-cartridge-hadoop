@@ -1,0 +1,82 @@
+Name: hadoop
+Cartridge-Short-Name: HADOOP
+Display-Name: Hadoop
+Description: "The Apache Hadoop software library is a framework that allows for the distributed processing of large data sets across clusters of computers using simple programming models"
+Version: '2.4'
+License: Apache
+License-Url: http://www.apache.org/licenses/LICENSE-2.0.html
+Vendor: Red Hat
+Cartridge-Version: 0.0.1
+Cartridge-Vendor: redhat
+Source-Url: http://github.com/bdecoste/openshift-origin-cartridge-hadoop.git
+Categories:
+  - service
+  - web_framework
+  - java
+Website: http://hadoop.apache.org
+Help-Topics:
+  "Developer Center": https://www.openshift.com/developers
+Cart-Data:
+  - Key: OPENSHIFT_HADOOP_LOG_DIR
+    Type: environment
+    Description: "Directory to store application log files."
+  - Key: OPENSHIFT_TMP_DIR
+    Type: environment
+    Description: "Directory to store application temporary files."
+  - Key: OPENSHIFT_REPO_DIR
+    Type: environment
+    Description: "Application root directory where application files reside. This directory is reset every time you do a git-push"
+  - Key: OPENSHIFT_APP_DNS
+    Type: environment
+    Description: "Fully qualified domain name for the application."
+  - Key: OPENSHIFT_APP_NAME
+    Type: environment
+    Description: "Application name"
+  - Key: OPENSHIFT_DATA_DIR
+    Type: environment
+    Description: "Directory to store application data files. Preserved across git-pushes. Not shared across gears."
+  - Key: OPENSHIFT_APP_UUID
+    Type: environment
+    Description: "Unique ID which identified the application. Does not change between gears."
+  - Key: OPENSHIFT_GEAR_UUID
+    Type: environment
+    Description: "Unique ID which identified the gear. This value changes between gears."
+Provides:
+  - hadoop-2.4
+  - "hadoop"
+  - "hadoop(version) = 2.4"
+  - "hadoop(version) >= 2.4"
+Publishes:
+  publish-generic-java:
+    Type: "ENV:NET_TCP:generic-java"
+  publish-hadoop-cluster:
+    Type: "NET_TCP:hadoop-cluster-info"
+Subscribes:
+  set-hadoop-cluster:
+    Type: "NET_TCP:hadoop-cluster-info"
+Scaling:
+  Min: 1
+  Max: -1
+Endpoints:
+  - Private-IP-Name:     IP
+    Private-Port-Name:   HTTP_PORT
+    Private-Port:        8088
+    Public-Port-Name:    HTTP_PROXY_PORT
+    WebSocket-Port-Name: WEBSOCKET_PORT
+    WebSocket-Port:      8676
+    Mappings:
+      - Frontend:      ""
+        Backend:       ""
+        Options:       { "websocket": 1}
+      - Frontend:      "/health"
+        Backend:       ""
+        Options:       { health: true }
+  - Private-IP-Name:   IP
+    Private-Port-Name: CLUSTER_PORT
+    Private-Port:      8031
+    Public-Port-Name:  CLUSTER_PROXY_PORT
+  - Private-IP-Name:   IP
+    Private-Port-Name: HDFS_PORT
+    Private-Port:      50070
+    Public-Port-Name:  HDFS_PROXY_PORT
+Install-Build-Required: false

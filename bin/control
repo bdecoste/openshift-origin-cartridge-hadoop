@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!! control $1"
+
 source $OPENSHIFT_CARTRIDGE_SDK_BASH
 
 HADOOP_BIN_DIR=${OPENSHIFT_HADOOP_DIR}/bin
@@ -18,14 +20,22 @@ function deploy() {
 }
 
 function start() {
-  echo "Starting Hadoop"
+  echo "!!!!!!!!!!!!!!!!!!!!! Starting Hadoop"
 
   HADOOP_CONF_DIR=${OPENSHIFT_HADOOP_DIR}/hadoop/etc/hadoop
-  
+ 
+ 
   # Check for running app
   pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
+
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/core-site.xml
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/yarn-site.xml
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/hdfs-site.xml
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_HDFS_CLUSTER}/${OPENSHIFT_HADOOP_HDFS_CLUSTER}/g" ./etc/hadoop/hdfs-site.xml
+
 	if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
-		bin/hdfs namenode -format default 2>&1
+		
+
 		sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start namenode 2>&1
 		sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start resourcemanager 2>&1    	
 	        sbin/yarn-daemon.sh start proxyserver --config $HADOOP_CONF_DIR 2>&1
