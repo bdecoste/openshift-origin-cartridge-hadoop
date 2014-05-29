@@ -28,7 +28,7 @@ function start() {
   # Check for running app
   pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
 
-	
+	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/slaves
 	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/yarn-site.xml
 	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/hdfs-site.xml
 	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/mapred-site.xml
@@ -49,6 +49,8 @@ function start() {
         else
 		sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_HDFS_CLUSTER}/g" ./etc/hadoop/core-site.xml
 		sed -i -e "s/\${env.OPENSHIFT_HADOOP_RM_RT_ADDRESS}/${OPENSHIFT_HADOOP_RM_RT_ADDRESS}/g" ./etc/hadoop/yarn-site.xml
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_DATANODE_ADDRESS}/${OPENSHIFT_GEAR_DNS}:${OPENSHIFT_HADOOP_DATANODE_ADDRESS_PROXY_PORT}/g" ./etc/hadoop/hdfs-site.xml
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_DATANODE_HTTP_ADDRESS}/${OPENSHIFT_GEAR_DNS}:${OPENSHIFT_HADOOP_DATANODE_HTTP_ADDRESS_PROXY_PORT}/g" ./etc/hadoop/hdfs-site.xml
 
 		sbin/hadoop-daemon.sh --config $HADOOP_CONF_DIR --script hdfs start datanode 2>&1
 		sbin/yarn-daemon.sh --config $HADOOP_CONF_DIR start nodemanager 2>&1

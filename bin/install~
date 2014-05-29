@@ -18,10 +18,12 @@ tar xvf hadoop2.tar.gz
 
 pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
 	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/hdfs-site.xml
-
-#        if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
-                bin/hdfs namenode -format default 2>&1
-#	fi
+        if [ "$OPENSHIFT_APP_UUID" = "$OPENSHIFT_GEAR_UUID" ]; then
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! formatting"
+		sed -i -e "s/\${env.OPENSHIFT_HADOOP_DATANODE_ADDRESS}/${OPENSHIFT_HADOOP_IP}:50010/g" ./etc/hadoop/hdfs-site.xml
+                bin/hdfs namenode -format default
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! formatted"
+	fi
 popd
 
 echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! installed"

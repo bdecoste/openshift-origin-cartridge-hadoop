@@ -51,6 +51,10 @@ Publishes:
     Type: NET_TCP:hadoop-cluster-info
   publish-hadoop-rm-rt-address:
     Type: NET_TCP:hadoop-rm-rt-info
+  publish-hadoop-datanode-address:
+    Type: NET_TCP:hadoop-datanode-address-info
+  publish-hadoop-datanode-http-address:
+    Type: NET_TCP:hadoop-datanode-http-address-info
 Subscribes:
   set-env:
     Type: ENV:*
@@ -62,6 +66,10 @@ Subscribes:
     Type: NET_TCP:hadoop-cluster-info
   set-hadoop-rm-rt-address:
     Type: NET_TCP:hadoop-rm-rt-info
+  set-hadoop-datanode-address:
+    Type: NET_TCP:hadoop-datanode-address-info
+  set-hadoop-datanode-http-address:
+    Type: NET_TCP:hadoop-datanode-http-address-info
 Scaling:
   Min: 1
   Max: -1
@@ -92,4 +100,12 @@ Endpoints:
     Private-Port-Name: 	RM_RT_PORT
     Private-Port:      	8031
     Public-Port-Name:  	RM_RT_PROXY_PORT
+  - Private-IP-Name:   	IP
+    Private-Port-Name: 	DATANODE_ADDRESS_PORT
+    Private-Port:      	50010
+    Public-Port-Name:  	DATANODE_ADDRESS_PROXY_PORT
+  - Private-IP-Name:   	IP
+    Private-Port-Name: 	DATANODE_HTTP_ADDRESS_PORT
+    Private-Port:      	50075
+    Public-Port-Name:  	DATANODE_HTTP_ADDRESS_PROXY_PORT
 Install-Build-Required: false
