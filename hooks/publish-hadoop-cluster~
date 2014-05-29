@@ -1,6 +1,0 @@
-#!/bin/bash
-
-# Exit on any errors
-set -e
-
-echo ${OPENSHIFT_GEAR_DNS}:${OPENSHIFT_HADOOP_HDFS_PROXY_PORT}

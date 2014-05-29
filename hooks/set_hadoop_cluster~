@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# Exit on any errors
-set -e
-
-source $OPENSHIFT_CARTRIDGE_SDK_BASH
-
-echo "*********************** set $1 $2 $3" > ${OPENSHIFT_HADOOP_DIR}/env/OPENSHIFT_HADOOP_CLUSTER

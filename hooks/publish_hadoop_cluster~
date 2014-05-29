@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# Exit on any errors
-set -e
-
-echo "*********************** publish ${OPENSHIFT_GEAR_DNS}:${OPENSHIFT_HADOOP_HDFS_PROXY_PORT}" > ${OPENSHIFT_HADOOP_DIR}/env/OPENSHIFT_HADOOP_CLUSTER
-
-echo ${OPENSHIFT_GEAR_DNS}:${OPENSHIFT_HADOOP_HDFS_PROXY_PORT}
