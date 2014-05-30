@@ -13,8 +13,8 @@ echo "$version" > "$OPENSHIFT_HADOOP_DIR/env/OPENSHIFT_HADOOP_VERSION"
 
 mv ${OPENSHIFT_HADOOP_DIR}/versions/${version}/*.tar.gz ${OPENSHIFT_HADOOP_DIR}
 
-tar xvf hadoop1.tar.gz
 tar xvf hadoop2.tar.gz
+tar xvf hadoop1.tar.gz
 
 pushd ${OPENSHIFT_HADOOP_DIR}/hadoop
 	sed -i -e "s/\${env.OPENSHIFT_HADOOP_IP}/${OPENSHIFT_HADOOP_IP}/g" ./etc/hadoop/hdfs-site.xml
